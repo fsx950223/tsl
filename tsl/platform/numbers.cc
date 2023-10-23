@@ -27,9 +27,9 @@ limitations under the License.
 #include <unordered_map>
 
 #include "double-conversion/double-conversion.h"
-#include "tsl/platform/str_util.h"
 #include "tsl/platform/logging.h"
 #include "tsl/platform/macros.h"
+#include "tsl/platform/str_util.h"
 #include "tsl/platform/stringprintf.h"
 #include "tsl/platform/types.h"
 
@@ -38,8 +38,8 @@ namespace tsl {
 namespace {
 
 template <typename T>
-const std::unordered_map<std::string, T>* GetSpecialNumsSingleton() {
-  static const std::unordered_map<std::string, T>* special_nums =
+const std::unordered_map<std::string, T> *GetSpecialNumsSingleton() {
+  static const std::unordered_map<std::string, T> *special_nums =
       CHECK_NOTNULL((new const std::unordered_map<std::string, T>{
           {"inf", std::numeric_limits<T>::infinity()},
           {"+inf", std::numeric_limits<T>::infinity()},
@@ -55,7 +55,7 @@ const std::unordered_map<std::string, T>* GetSpecialNumsSingleton() {
 }
 
 template <typename T>
-T locale_independent_strtonum(const char* str, const char** endptr) {
+T locale_independent_strtonum(const char *str, const char **endptr) {
   auto special_nums = GetSpecialNumsSingleton<T>();
   std::stringstream s(str);
 
@@ -77,7 +77,7 @@ T locale_independent_strtonum(const char* str, const char** endptr) {
     // Perhaps it's a hex number
     if (special_num_str.compare(0, 2, "0x") == 0 ||
         special_num_str.compare(0, 3, "-0x") == 0) {
-      return strtol(str, const_cast<char**>(endptr), 16);
+      return strtol(str, const_cast<char **>(endptr), 16);
     }
   }
   // Reset the stream
@@ -114,7 +114,7 @@ T locale_independent_strtonum(const char* str, const char** endptr) {
   return result;
 }
 
-static inline const double_conversion::StringToDoubleConverter&
+static inline const double_conversion::StringToDoubleConverter &
 StringToFloatConverter() {
   static const double_conversion::StringToDoubleConverter converter(
       double_conversion::StringToDoubleConverter::ALLOW_LEADING_SPACES |
@@ -129,7 +129,7 @@ StringToFloatConverter() {
 
 namespace strings {
 
-size_t FastInt32ToBufferLeft(int32_t i, char* buffer) {
+size_t FastInt32ToBufferLeft(int32_t i, char *buffer) {
   uint32_t u = i;
   size_t length = 0;
   if (i < 0) {
@@ -144,8 +144,8 @@ size_t FastInt32ToBufferLeft(int32_t i, char* buffer) {
   return length;
 }
 
-size_t FastUInt32ToBufferLeft(uint32_t i, char* buffer) {
-  char* start = buffer;
+size_t FastUInt32ToBufferLeft(uint32_t i, char *buffer) {
+  char *start = buffer;
   do {
     *buffer++ = ((i % 10) + '0');
     i /= 10;
@@ -155,7 +155,7 @@ size_t FastUInt32ToBufferLeft(uint32_t i, char* buffer) {
   return buffer - start;
 }
 
-size_t FastInt64ToBufferLeft(int64_t i, char* buffer) {
+size_t FastInt64ToBufferLeft(int64_t i, char *buffer) {
   uint64_t u = i;
   size_t length = 0;
   if (i < 0) {
@@ -167,8 +167,8 @@ size_t FastInt64ToBufferLeft(int64_t i, char* buffer) {
   return length;
 }
 
-size_t FastUInt64ToBufferLeft(uint64_t i, char* buffer) {
-  char* start = buffer;
+size_t FastUInt64ToBufferLeft(uint64_t i, char *buffer) {
+  char *start = buffer;
   do {
     *buffer++ = ((i % 10) + '0');
     i /= 10;
@@ -180,7 +180,7 @@ size_t FastUInt64ToBufferLeft(uint64_t i, char* buffer) {
 
 static const double kDoublePrecisionCheckMax = DBL_MAX / 1.000000000000001;
 
-size_t DoubleToBuffer(double value, char* buffer) {
+size_t DoubleToBuffer(double value, char *buffer) {
   // DBL_DIG is 15 for IEEE-754 doubles, which are used on almost all
   // platforms these days.  Just in case some system exists where DBL_DIG
   // is significantly larger -- and risks overflowing our buffer -- we have
@@ -224,14 +224,15 @@ char SafeFirstChar(StringPiece str) {
   if (str.empty()) return '\0';
   return str[0];
 }
-void SkipSpaces(StringPiece* str) {
+void SkipSpaces(StringPiece *str) {
   while (isspace(SafeFirstChar(*str))) str->remove_prefix(1);
 }
 }  // namespace
 
-bool safe_strto64(StringPiece str, int64_t* value) {
+bool safe_strto64(StringPiece str, int64_t *value) {
   SkipSpaces(&str);
-
+  // Remove first + operator in numbers such as +123, etc
+  absl::ConsumePrefix(&str, "+");
   int64_t vlimit = kint64max;
   int sign = 1;
   if (absl::ConsumePrefix(&str, "-")) {
@@ -270,8 +271,10 @@ bool safe_strto64(StringPiece str, int64_t* value) {
   return true;
 }
 
-bool safe_strtou64(StringPiece str, uint64_t* value) {
+bool safe_strtou64(StringPiece str, uint64_t *value) {
   SkipSpaces(&str);
+  // Remove first + operator in numbers such as +123, etc
+  absl::ConsumePrefix(&str, "+");
   if (!isdigit(SafeFirstChar(str))) return false;
 
   uint64_t result = 0;
@@ -291,9 +294,10 @@ bool safe_strtou64(StringPiece str, uint64_t* value) {
   return true;
 }
 
-bool safe_strto32(StringPiece str, int32_t* value) {
+bool safe_strto32(StringPiece str, int32_t *value) {
   SkipSpaces(&str);
-
+  // Remove first + operator in numbers such as +123, etc
+  absl::ConsumePrefix(&str, "+");
   int64_t vmax = kint32max;
   int sign = 1;
   if (absl::ConsumePrefix(&str, "-")) {
@@ -321,8 +325,10 @@ bool safe_strto32(StringPiece str, int32_t* value) {
   return true;
 }
 
-bool safe_strtou32(StringPiece str, uint32_t* value) {
+bool safe_strtou32(StringPiece str, uint32_t *value) {
   SkipSpaces(&str);
+  // Remove first + operator in numbers such as +123, etc
+  absl::ConsumePrefix(&str, "+");
   if (!isdigit(SafeFirstChar(str))) return false;
 
   int64_t result = 0;
@@ -341,7 +347,7 @@ bool safe_strtou32(StringPiece str, uint32_t* value) {
   return true;
 }
 
-bool safe_strtof(StringPiece str, float* value) {
+bool safe_strtof(StringPiece str, float *value) {
   int processed_characters_count = -1;
   auto len = str.size();
 
@@ -354,7 +360,7 @@ bool safe_strtof(StringPiece str, float* value) {
   return processed_characters_count > 0;
 }
 
-bool safe_strtod(StringPiece str, double* value) {
+bool safe_strtod(StringPiece str, double *value) {
   int processed_characters_count = -1;
   auto len = str.size();
 
@@ -367,7 +373,7 @@ bool safe_strtod(StringPiece str, double* value) {
   return processed_characters_count > 0;
 }
 
-size_t FloatToBuffer(float value, char* buffer) {
+size_t FloatToBuffer(float value, char *buffer) {
   // FLT_DIG is 6 for IEEE-754 floats, which are used on almost all
   // platforms these days.  Just in case some system exists where FLT_DIG
   // is significantly larger -- and risks overflowing our buffer -- we have
@@ -406,7 +412,7 @@ std::string FpToString(Fprint fp) {
   return std::string(buf);
 }
 
-bool StringToFp(const std::string& s, Fprint* fp) {
+bool StringToFp(const std::string &s, Fprint *fp) {
   char junk;
   uint64_t result;
   if (sscanf(s.c_str(), "%" SCNx64 "%c", &result, &junk) == 1) {
@@ -417,8 +423,8 @@ bool StringToFp(const std::string& s, Fprint* fp) {
   }
 }
 
-StringPiece Uint64ToHexString(uint64_t v, char* buf) {
-  static const char* hexdigits = "0123456789abcdef";
+StringPiece Uint64ToHexString(uint64_t v, char *buf) {
+  static const char *hexdigits = "0123456789abcdef";
   const int num_byte = 16;
   buf[num_byte] = '\0';
   for (int i = num_byte - 1; i >= 0; i--) {
@@ -428,7 +434,7 @@ StringPiece Uint64ToHexString(uint64_t v, char* buf) {
   return StringPiece(buf, num_byte);
 }
 
-bool HexStringToUint64(const StringPiece& s, uint64_t* result) {
+bool HexStringToUint64(const StringPiece &s, uint64_t *result) {
   uint64_t v = 0;
   if (s.empty()) {
     return false;
@@ -462,7 +468,7 @@ std::string HumanReadableNum(int64_t value) {
     Appendf(&s, "%0.3G", static_cast<double>(value));
   } else {
     static const char units[] = "kMBT";
-    const char* unit = units;
+    const char *unit = units;
     while (value >= static_cast<int64_t>(1000000)) {
       value /= static_cast<int64_t>(1000);
       ++unit;
@@ -479,7 +485,7 @@ std::string HumanReadableNumBytes(int64_t num_bytes) {
     return "-8E";
   }
 
-  const char* neg_str = (num_bytes < 0) ? "-" : "";
+  const char *neg_str = (num_bytes < 0) ? "-" : "";
   if (num_bytes < 0) {
     num_bytes = -num_bytes;
   }
@@ -494,7 +500,7 @@ std::string HumanReadableNumBytes(int64_t num_bytes) {
   }
 
   static const char units[] = "KMGTPE";  // int64 only goes up to E.
-  const char* unit = units;
+  const char *unit = units;
   while (num_bytes >= static_cast<int64_t>(1024) * 1024) {
     num_bytes /= 1024;
     ++unit;

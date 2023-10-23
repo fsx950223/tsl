@@ -125,6 +125,8 @@ TEST(safe_strto32, Int32s) {
   EXPECT_EQ(1, result);
   EXPECT_EQ(true, safe_strto32("123", &result));
   EXPECT_EQ(123, result);
+  EXPECT_EQ(true, safe_strto32(" +123 ", &result));
+  EXPECT_EQ(123, result);
   EXPECT_EQ(true, safe_strto32(" -123 ", &result));
   EXPECT_EQ(-123, result);
   EXPECT_EQ(true, safe_strto32("2147483647", &result));
@@ -161,6 +163,8 @@ TEST(safe_strtou32, UInt32s) {
   EXPECT_EQ(1, result);
   EXPECT_TRUE(safe_strtou32("123", &result));
   EXPECT_EQ(123, result);
+  EXPECT_TRUE(safe_strtou32(" +123 ", &result));
+  EXPECT_EQ(123, result);
   EXPECT_TRUE(safe_strtou32("4294967295", &result));
   EXPECT_EQ(4294967295, result);
 
@@ -191,6 +195,8 @@ TEST(safe_strto64, Int64s) {
   EXPECT_EQ(true, safe_strto64("1", &result));
   EXPECT_EQ(1, result);
   EXPECT_EQ(true, safe_strto64("123", &result));
+  EXPECT_EQ(123, result);
+  EXPECT_EQ(true, safe_strto64(" +123 ", &result));
   EXPECT_EQ(123, result);
   EXPECT_EQ(true, safe_strto64(" -123 ", &result));
   EXPECT_EQ(-123, result);
@@ -229,6 +235,8 @@ TEST(safe_strtou64, UInt64s) {
   EXPECT_TRUE(safe_strtou64("1", &result));
   EXPECT_EQ(1, result);
   EXPECT_TRUE(safe_strtou64("123", &result));
+  EXPECT_EQ(123, result);
+  EXPECT_TRUE(safe_strtou64(" +123 ", &result));
   EXPECT_EQ(123, result);
   EXPECT_TRUE(safe_strtou64("  345  ", &result));
   EXPECT_EQ(345, result);
